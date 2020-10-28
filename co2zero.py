@@ -7,7 +7,6 @@ import lcd as lcd
 
 sgp30 = SGP30()
 
-print("Sensor warming up, please wait...")
 def crude_progress_bar():
     sys.stdout.write('.')
     sys.stdout.flush()
@@ -71,4 +70,8 @@ def main():
 
 if __name__ == "__main__":
     lcd.lcd_init()
+
+    print("CO2Zero starting, please wait...")
+    lcd.lcd_string("CO2Zero starting, please wait...", 1)
+
     main()
