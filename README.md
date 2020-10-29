@@ -16,3 +16,7 @@ sudo systemctl enable co2zero.service
 ```
 dtoverlay=i2c-gpio,bus=4,i2c_gpio_delay_us=1,i2c_gpio_sda=23,i2c_gpio_scl=24
 ```
+
+## Links
+### Temperatursensor
+- https://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-the-raspberry-pi/
