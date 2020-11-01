@@ -1,6 +1,10 @@
 import time, signal, sys, socket
 from collections import deque
 
+# Temoperatursensor DHT11
+# https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
+import board, adafruit_dht
+
 # Ampel
 # TODO https://gpiozero.readthedocs.io/en/stable/
 import RPi.GPIO as GPIO
@@ -16,7 +20,11 @@ def crude_progress_bar():
     sys.stdout.write('.')
     sys.stdout.flush()
 
+# CO2-Sensor initialisieren
 sgp30.start_measurement(crude_progress_bar)
+
+# Temperatursensor initialisieren
+dhtDevice = adafruit_dht.DHT11(board.D4)
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(17, GPIO.OUT)
@@ -61,24 +69,30 @@ def main():
 
     while True:
 
-        ppm = getPollutionData()
-        ppmQueue.append(ppm)
-        mov_average_ppm = sum(ppmQueue) / SLIDING_WINDOWS_SIZE
+        try:
+            ppm = getPollutionData()
+            ppmQueue.append(ppm)
+            mov_average_ppm = int(sum(ppmQueue) / SLIDING_WINDOWS_SIZE)
 
-        msg1 = "current: " + str(ppm)
-        msg2 = "mov_avg: " + str(mov_average_ppm)
-        print(msg1 + ", " + msg2)
-        lcd.lcd_string(msg1, 1)
-        lcd.lcd_string(msg2, 2)
+            temperature_c = dhtDevice.temperature
+            humidity = dhtDevice.humidity
 
-        if mov_average_ppm in range(0, 800):
-            green()
-        elif mov_average_ppm in range(801, 2000):
-            yellow()
-        else:
-            red()
+            msg1 = "ppm: " + str(mov_average_ppm)
+            msg2 = "{:.1f}C    {}% ".format(temperature_c, humidity)
+            print(msg1 + ", " + msg2)
+            lcd.lcd_string(msg1, lcd.LCD_LINE_1)
+            lcd.lcd_string(msg2, lcd.LCD_LINE_2)
 
-        time.sleep(1)
+            if mov_average_ppm in range(0, 800):
+                green()
+            elif mov_average_ppm in range(801, 2000):
+                yellow()
+            else:
+                red()
+
+            time.sleep(1)
+        except Exception as error:
+            print(error)
 
 
 if __name__ == "__main__":
@@ -86,12 +100,12 @@ if __name__ == "__main__":
 
     print("CO2Zero starting, please wait...")
 
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
+    # hostname = socket.gethostname()
+    # ip_address = socket.gethostbyname(hostname)
     lcd.lcd_string("CO2Zero starting, please wait...", 1)
-    lcd.lcd_string("IP: " + ip_address, 2)
-
-    print("IP: " + ip_address)
+    # lcd.lcd_string("IP: " + ip_address, 2)
+    #
+    # print("IP: " + ip_address)
 
     time.sleep(2)
 
