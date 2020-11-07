@@ -93,8 +93,8 @@ def main():
             uhrzeit = now.strftime("%H:%M") 
             msg3 = temperatur[7:-1] +"C  " + uhrzeit + " Uhr"
             print(msg1 + ", " + msg2 + ", " + msg3)
-            lcd.lcd_string(msg2, 1)
-            lcd.lcd_string(msg3, 0xC0)
+            lcd.lcd_string(msg2, lcd.LCD_LINE_1)
+            lcd.lcd_string(msg3, lcd.LCD_LINE_2)
  ### Ende neuer Teil       
             if mov_average_ppm in range(0, 1000):
                 green()
@@ -115,8 +115,8 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname + ".local")
-    lcd.lcd_string("CO2Zero startet, bitte warten...", 1)
-    lcd.lcd_string(ip_address, 0xC0)
+    lcd.lcd_string("CO2Zero startet, bitte warten...", lcd.LCD_LINE_1)
+    lcd.lcd_string(ip_address, lcd.LCD_LINE_2)
 
     print("IP: " + ip_address)
 
