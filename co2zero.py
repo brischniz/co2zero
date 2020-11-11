@@ -1,19 +1,14 @@
 #!/usr/bin/python3
 
-import time, signal, sys, socket
+import time, sys, socket
 from collections import deque
 from datetime import datetime
 from gpiozero import LED
 from gpiozero import PWMLED
 
-
 # Temoperatursensor DHT11
 # https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
 import board, Adafruit_DHT
-
-# Ampel
-# TODO https://gpiozero.readthedocs.io/en/stable/
-#import RPi.GPIO as GPIO
 
 # CO2 Sensor
 from sgp30 import SGP30

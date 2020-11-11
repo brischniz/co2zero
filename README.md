@@ -2,6 +2,11 @@
 
 `git clone https://github.com/brischniz/co2zero`
 
+## Installation
+```
+sudo apt install python3-gpiozero
+```
+
 ## Autostart
 
 ```
