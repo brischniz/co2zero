@@ -1,6 +1,11 @@
+#!/usr/bin/python3
+
 import time, signal, sys, socket
 from collections import deque
 from datetime import datetime
+from gpiozero import LED
+from gpiozero import PWMLED
+
 
 # Temoperatursensor DHT11
 # https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
@@ -8,7 +13,7 @@ import board, Adafruit_DHT
 
 # Ampel
 # TODO https://gpiozero.readthedocs.io/en/stable/
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 
 # CO2 Sensor
 from sgp30 import SGP30
@@ -24,35 +29,36 @@ def crude_progress_bar():
 # CO2-Sensor initialisieren
 # sgp30.start_measurement(crude_progress_bar)
 
-# Temperatursensor initialisieren
-dhtDevice = adafruit_dht.DHT11(board.D4)
+led_g = None
+led_y = None
+led_r = None
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.OUT)
-GPIO.setup(27, GPIO.OUT)
-GPIO.setup(22, GPIO.OUT)
+def init_leds():
+    global led_g, led_y, led_r
+    led_g = LED(17)
+    led_y = LED(27)
+    led_r = LED(22)
 
-def allLightsOff(signal, frame):
-    GPIO.output(17, False)
-    GPIO.output(27, False)
-    GPIO.output(22, False)
-    GPIO.cleanup()
-    sys.exit(0)
+def allLightsOff():
+    led_g.off()
+    led_y.off()
+    led_r.off()
+    # sys.exit(0)
 
 def green():
-    GPIO.output(17, True)
-    GPIO.output(27, False)
-    GPIO.output(22, False)
+    led_g.on()
+    led_y.off()
+    led_r.off()
 
 def yellow():
-    GPIO.output(17, False)
-    GPIO.output(27, True)
-    GPIO.output(22, False)
+    led_g.off()
+    led_y.on()
+    led_r.off()
 
 def red():
-    GPIO.output(17, False)
-    GPIO.output(27, False)
-    GPIO.output(22, True)
+    led_g.off()
+    led_y.off()
+    led_r.on()
 
 def getPollutionData():
     """
@@ -65,7 +71,7 @@ def getPollutionData():
 
 
 def main():
-    signal.signal(signal.SIGINT, allLightsOff)
+    # signal.signal(signal.SIGINT, allLightsOff)
     ppmQueue = deque(maxlen=SLIDING_WINDOWS_SIZE)
 
     while True:
@@ -74,34 +80,27 @@ def main():
             ppm = getPollutionData()
             ppmQueue.append(ppm)
             mov_average_ppm = int(sum(ppmQueue) / SLIDING_WINDOWS_SIZE)
-##### alter Teil von Hannes
-#            temperature_c = dhtDevice.temperature
-#            humidity = dhtDevice.humidity
 
-#            msg1 = "ppm: " + str(mov_average_ppm)
-#            msg2 = "{:.1f}C    {}% ".format(temperature_c, humidity)
-#            print(msg1 + ", " + msg2)
-#            lcd.lcd_string(msg1, lcd.LCD_LINE_1)
-#            lcd.lcd_string(msg2, lcd.LCD_LINE_2)
-##### Ende alter Teil 
-
-## neu von Michi
             msg1 = "Aktuell: " + str(ppm)
             msg2 = "CO2 Wert: " + str(mov_average_ppm)
             temperatur = str(Adafruit_DHT.read_retry(11, 4))
             now = datetime.now()
             uhrzeit = now.strftime("%H:%M") 
-            msg3 = temperatur[7:-1] +"C  " + uhrzeit + " Uhr"
+            msg3 = temperatur[7:-1] + "C  " + uhrzeit + " Uhr"
+
             print(msg1 + ", " + msg2 + ", " + msg3)
+
             lcd.lcd_string(msg2, lcd.LCD_LINE_1)
             lcd.lcd_string(msg3, lcd.LCD_LINE_2)
- ### Ende neuer Teil       
+
             if mov_average_ppm in range(0, 1000):
                 green()
             elif mov_average_ppm in range(1001, 2000):
                 yellow()
-            else:
+            elif mov_average_ppm in range(2001, 3000):
                 red()
+            else:
+                led_r.blink()
 
             time.sleep(1)
         except Exception as error:
@@ -112,15 +111,27 @@ if __name__ == "__main__":
     lcd.lcd_init()
 
     print("CO2Zero startet, bitte warten...")
+    pwm_g = PWMLED(17)
+    pwm_y = PWMLED(27)
+    pwm_r = PWMLED(22)
+    pwm_g.pulse()
+    pwm_y.pulse()
+    pwm_r.pulse()
 
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname + ".local")
+    # hostname = socket.gethostname()
+    # ip_address = socket.gethostbyname(hostname + ".local")
     lcd.lcd_string("CO2Zero startet, bitte warten...", lcd.LCD_LINE_1)
-    lcd.lcd_string(ip_address, lcd.LCD_LINE_2)
+    # lcd.lcd_string(ip_address, lcd.LCD_LINE_2)
 
-    print("IP: " + ip_address)
+    # print("IP: " + ip_address)
 
-    time.sleep(2)
+    time.sleep(5)
+
+    pwm_g.close()
+    pwm_y.close()
+    pwm_r.close()
+
+    init_leds()
 
     main()
 
