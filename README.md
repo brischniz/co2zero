@@ -5,6 +5,8 @@
 ## Installation
 ```
 sudo apt install python3-gpiozero
+sudo apt-get install python-influxdb
+
 ```
 
 ## Autostart

@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
 import time, sys, socket
+from datetime import datetime as dt
 from collections import deque
 from datetime import datetime
 from gpiozero import LED
 from gpiozero import PWMLED
+from influxdb import InfluxDBClient
 
 # Temoperatursensor DHT11
 # https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
@@ -14,7 +16,10 @@ import board, Adafruit_DHT
 from sgp30 import SGP30
 import lcd as lcd
 
+CO2ZERO_HOST = "192.168.1.245"
+INFLUXDB_HOST = '192.168.1.98'
 SLIDING_WINDOWS_SIZE = 30
+
 sgp30 = SGP30()
 
 def crude_progress_bar():
@@ -23,6 +28,16 @@ def crude_progress_bar():
 
 # CO2-Sensor initialisieren
 # sgp30.start_measurement(crude_progress_bar)
+
+influxdb_available = True
+try:
+    client = InfluxDBClient(host=INFLUXDB_HOST, port=8086, database='co2zero')
+    influxdb_version = client.ping()
+    print("Connected to InfluxDB " + influxdb_version + " at " + INFLUXDB_HOST)
+except Exception:
+    influxdb_available = False
+    print("InfluxDB is not available...Continuing anyway")
+    pass
 
 led_g = None
 led_y = None
@@ -64,6 +79,23 @@ def getPollutionData():
 #    print(str(result.equivalent_co2))
     return result.equivalent_co2
 
+def log_to_influxdb(data):
+    if not influxdb_available:
+        return
+
+    json_body = [{
+        "measurement": "air_quality",
+        "tags": {
+            "host": CO2ZERO_HOST
+        },
+        "time": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        "fields": {
+            "co2": data["co2"],
+            "temp": data["temp"],
+            "humidity": data["humidity"]
+        }
+    }]
+    client.write_points(json_body)
 
 def main():
     # signal.signal(signal.SIGINT, allLightsOff)
@@ -78,10 +110,12 @@ def main():
 
             msg1 = "Aktuell: " + str(ppm)
             msg2 = "CO2 Wert: " + str(mov_average_ppm)
-            temperatur = str(Adafruit_DHT.read_retry(11, 4))
-            now = datetime.now()
-            uhrzeit = now.strftime("%H:%M") 
-            msg3 = temperatur[7:-1] + "C  " + uhrzeit + " Uhr"
+            humidity, temperature = Adafruit_DHT.read_retry(11, 4)
+            humidity = round(humidity, 2)
+            temperature = round(temperature, 2)
+
+            uhrzeit = datetime.now().strftime("%H:%M")
+            msg3 = str(temperature) + "C  " + uhrzeit + " Uhr"
 
             print(msg1 + ", " + msg2 + ", " + msg3)
 
@@ -96,6 +130,9 @@ def main():
                 red()
             else:
                 led_r.blink()
+
+            data = {"co2": ppm, "temp": temperature, "humidity": humidity}
+            log_to_influxdb(data)
 
             time.sleep(1)
         except Exception as error:
