@@ -3,11 +3,20 @@
 `git clone https://github.com/brischniz/co2zero`
 
 ## Installation
+### Notwendige Python Libs
 ```
 sudo apt install python3-gpiozero
 sudo apt-get install python-influxdb
 
 ```
+
+### InfluxDB
+```
+docker run -d -p 8086:8086 -v <HOST_DIR>:/var/lib/influxdb influxdb:1.8
+```
+
+### Config
+
 
 ## Autostart
 
