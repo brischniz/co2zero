@@ -1,43 +1,56 @@
 #!/usr/bin/python3
 
-import time, sys, socket
-from datetime import datetime as dt
+import configparser
+import time
 from collections import deque
 from datetime import datetime
+
+# Temoperatursensor DHT11
+# https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
+import Adafruit_DHT
 from gpiozero import LED
 from gpiozero import PWMLED
 from influxdb import InfluxDBClient
 
-# Temoperatursensor DHT11
-# https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/python-setup
-import board, Adafruit_DHT
-
+import lcd as lcd
 # CO2 Sensor
 from sgp30 import SGP30
-import lcd as lcd
 
-CO2ZERO_HOST = "192.168.1.245"
-INFLUXDB_HOST = '192.168.1.98'
+config_system_host_name = "192.168.1.245"
+config_influxdb_host = '192.168.1.98'
+config_influxdb_port = '8086'
+config_influxdb_user = ''
+config_influxdb_pass = ''
 SLIDING_WINDOWS_SIZE = 30
 
+config = configparser.ConfigParser()
 sgp30 = SGP30()
 
-def crude_progress_bar():
-    sys.stdout.write('.')
-    sys.stdout.flush()
+# def crude_progress_bar():
+#     sys.stdout.write('.')
+#     sys.stdout.flush()
 
 # CO2-Sensor initialisieren
 # sgp30.start_measurement(crude_progress_bar)
 
+client = None
 influxdb_available = True
-try:
-    client = InfluxDBClient(host=INFLUXDB_HOST, port=8086, database='co2zero')
-    influxdb_version = client.ping()
-    print("Connected to InfluxDB " + influxdb_version + " at " + INFLUXDB_HOST)
-except Exception:
-    influxdb_available = False
-    print("InfluxDB is not available...Continuing anyway")
-    pass
+def init_influxdb():
+    global client, influxdb_available
+    try:
+        client = InfluxDBClient(
+            host=config_influxdb_host,
+            port=config_influxdb_port,
+            database='co2zero',
+            username=config_influxdb_user,
+            password=config_influxdb_pass
+        )
+        influxdb_version = client.ping()
+        print("Connected to InfluxDB " + influxdb_version + " at " + config_influxdb_host + ":" + config_influxdb_port)
+    except Exception:
+        influxdb_available = False
+        print("InfluxDB is not available...Continuing anyway")
+        pass
 
 led_g = None
 led_y = None
@@ -86,7 +99,7 @@ def log_to_influxdb(data):
     json_body = [{
         "measurement": "air_quality",
         "tags": {
-            "host": CO2ZERO_HOST
+            "host": config_system_host_name
         },
         "time": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         "fields": {
@@ -96,6 +109,18 @@ def log_to_influxdb(data):
         }
     }]
     client.write_points(json_body)
+
+def read_config():
+    global config_system_host_name, config_influxdb_host, config_influxdb_port, config_influxdb_user, config_influxdb_pass
+    # TODO start script anpassen - working dir
+    config.read("/home/pi/co2zero/settings.conf")
+
+    config_system_host_name = config['co2zero']['system_host_name']
+    config_influxdb_host = config['co2zero']['influxdb_host']
+    config_influxdb_port = config['co2zero']['influxdb_port']
+    config_influxdb_user = config['co2zero']['influxdb_user']
+    config_influxdb_pass = config['co2zero']['influxdb_pass']
+    print(config_influxdb_host)
 
 def main():
     # signal.signal(signal.SIGINT, allLightsOff)
@@ -140,7 +165,6 @@ def main():
 
 
 if __name__ == "__main__":
-    lcd.lcd_init()
 
     print("CO2Zero startet, bitte warten...")
     pwm_g = PWMLED(17)
@@ -150,12 +174,11 @@ if __name__ == "__main__":
     pwm_y.pulse()
     pwm_r.pulse()
 
-    # hostname = socket.gethostname()
-    # ip_address = socket.gethostbyname(hostname + ".local")
-    lcd.lcd_string("CO2Zero startet, bitte warten...", lcd.LCD_LINE_1)
-    # lcd.lcd_string(ip_address, lcd.LCD_LINE_2)
+    read_config()
+    init_influxdb()
+    lcd.lcd_init()
 
-    # print("IP: " + ip_address)
+    lcd.lcd_string("CO2Zero startet, bitte warten...", lcd.LCD_LINE_1)
 
     time.sleep(5)
 
