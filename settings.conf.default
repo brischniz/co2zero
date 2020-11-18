@@ -5,6 +5,7 @@
 [co2zero]
 system_host_name = <Name des CO2Zero>
 influxdb_host = <Host der InfluxDB>
+influxdb_db_name = <DB-Name>
 influxdb_port = <Port der InfluxDB>
 influxdb_user = <Username>
 influxdb_pass = <Password>

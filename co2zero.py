@@ -16,9 +16,10 @@ import lcd as lcd
 # CO2 Sensor
 from sgp30 import SGP30
 
-config_system_host_name = "192.168.1.245"
-config_influxdb_host = '192.168.1.98'
+config_system_host_name = ""
+config_influxdb_host = ''
 config_influxdb_port = '8086'
+config_influxdb_db_name = ''
 config_influxdb_user = ''
 config_influxdb_pass = ''
 SLIDING_WINDOWS_SIZE = 30
@@ -41,7 +42,7 @@ def init_influxdb():
         client = InfluxDBClient(
             host=config_influxdb_host,
             port=config_influxdb_port,
-            database='co2zero',
+            database=config_influxdb_db_name,
             username=config_influxdb_user,
             password=config_influxdb_pass
         )
@@ -111,12 +112,13 @@ def log_to_influxdb(data):
     client.write_points(json_body)
 
 def read_config():
-    global config_system_host_name, config_influxdb_host, config_influxdb_port, config_influxdb_user, config_influxdb_pass
+    global config_system_host_name, config_influxdb_host, config_influxdb_db_name, config_influxdb_port, config_influxdb_user, config_influxdb_pass
     # TODO start script anpassen - working dir
     config.read("/home/pi/co2zero/settings.conf")
 
     config_system_host_name = config['co2zero']['system_host_name']
     config_influxdb_host = config['co2zero']['influxdb_host']
+    config_influxdb_db_name = config['co2zero']['influxdb_db_name']
     config_influxdb_port = config['co2zero']['influxdb_port']
     config_influxdb_user = config['co2zero']['influxdb_user']
     config_influxdb_pass = config['co2zero']['influxdb_pass']
