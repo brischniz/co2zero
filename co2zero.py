@@ -149,9 +149,9 @@ def main():
             lcd.lcd_string(msg2, lcd.LCD_LINE_1)
             lcd.lcd_string(msg3, lcd.LCD_LINE_2)
 
-            if mov_average_ppm in range(0, 1000):
+            if mov_average_ppm in range(0, 1001):
                 green()
-            elif mov_average_ppm in range(1001, 2000):
+            elif mov_average_ppm in range(1001, 2001):
                 yellow()
             elif mov_average_ppm in range(2001, 3000):
                 red()
@@ -180,7 +180,8 @@ if __name__ == "__main__":
     init_influxdb()
     lcd.lcd_init()
 
-    lcd.lcd_string("CO2Zero startet, bitte warten...", lcd.LCD_LINE_1)
+    lcd.lcd_string("CO2Zero startet,", lcd.LCD_LINE_1)
+    lcd.lcd_string("bitte warten ...", lcd.LCD_LINE_2)
 
     time.sleep(5)
 
