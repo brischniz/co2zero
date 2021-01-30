@@ -2,6 +2,7 @@
 
 import configparser
 import time
+import sys
 from collections import deque
 from datetime import datetime
 
@@ -27,12 +28,12 @@ SLIDING_WINDOWS_SIZE = 30
 config = configparser.ConfigParser()
 sgp30 = SGP30()
 
-# def crude_progress_bar():
-#     sys.stdout.write('.')
-#     sys.stdout.flush()
+def crude_progress_bar():
+    sys.stdout.write('.')
+    sys.stdout.flush()
 
 # CO2-Sensor initialisieren
-# sgp30.start_measurement(crude_progress_bar)
+sgp30.start_measurement(crude_progress_bar)
 
 client = None
 influxdb_available = True

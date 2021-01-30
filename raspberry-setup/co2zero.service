@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 User=pi
 Type=idle
-ExecStart=/usr/bin/python /home/pi/co2zero/co2zero.py
+ExecStart=/usr/bin/python3 /home/pi/co2zero/co2zero.py
 
 [Install]
 WantedBy=multi-user.target

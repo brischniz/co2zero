@@ -24,7 +24,7 @@ docker run -d -p 8086:8086 -v <HOST_DIR>:/var/lib/influxdb influxdb:1.8
 sudo cp co2zero.service /etc/systemd/system/
 sudo systemctl start co2zero.service
 sudo systemctl enable co2zero.service
-``
+```
 
 
 ## /boot/config.txt
