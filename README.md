@@ -35,6 +35,9 @@ dtoverlay=i2c-gpio,bus=4,i2c_gpio_delay_us=1,i2c_gpio_sda=23,i2c_gpio_scl=24
 
 ## Links
 - http://raspberrypi.ws/
+  
+## LCD
+https://osoyoo.com/2016/06/01/drive-i2c-lcd-screen-with-raspberry-pi/
 
 ### I2C aktivieren
 - https://developer-blog.net/raspberry-pi-i2c-aktivieren/
